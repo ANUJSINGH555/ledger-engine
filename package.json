@@ -1,0 +1,29 @@
+{
+  "name": "ledger-engine",
+  "version": "1.0.0",
+  "description": "> A production-grade double-entry ledger in Node.js + PostgreSQL. > Built to demonstrate correctness under concurrency — the core problem of every fintech backend.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ANUJSINGH555/ledger-engine.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ANUJSINGH555/ledger-engine/issues"
+  },
+  "homepage": "https://github.com/ANUJSINGH555/ledger-engine#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "pg": "^8.22.0"
+  }
+}
