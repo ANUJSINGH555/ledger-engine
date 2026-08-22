@@ -228,32 +228,6 @@ Results (throughput, p99, invariant checks) are committed to `/docs/results/`.
 
 ---
 
-## Milestones
-
-| Week | Deliverable |
-|------|-------------|
-| 1 | Repo, Docker Compose (Postgres + app), schema + migrations, seed script |
-| 2 | POST /transfers happy path inside a real transaction; GET balance |
-| 3 | Idempotency (unique key + replay semantics + 409 on payload mismatch) |
-| 4 | Concurrency hardening: FOR UPDATE ordering, serializable retries; scenarios 1–3 passing |
-| 5 | Reconciliation worker + reversal endpoint; scenarios 4–5 passing |
-| 6 | k6 load test, results in README, architecture diagram, blog post draft |
-
----
-
-## Non-goals (v1)
-
-Multi-currency FX, authnz, sharding, event streaming, admin UI. Each is a
-deliberate cut — noted in `docs/decisions.md` with the reasoning. (Saying
-what you *didn't* build and why is a senior-engineer signal.)
-
-## Blog post that ships with this
-
-**"I built a double-entry ledger in PostgreSQL — here's what broke under 500 concurrent transfers"**
-Outline: why balance columns are a bug → the journal model → the idempotency
-race and how UNIQUE saves you → lock ordering and the deadlock I hit →
-serialization failures and retries → load test numbers.
-
 ## Running it
 
 ```bash
