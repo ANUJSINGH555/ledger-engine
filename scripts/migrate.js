@@ -25,12 +25,8 @@ async function main(){
     .sort()
     .filter(f => !applied.has(f));
 
-    console.log(pending);
-
     for(const file of pending) {
-        console.log('pending items', file);
         const sql = fs.readFileSync(path.join(MIGRATIONS_DIR,file),'utf-8');
-        console.log(sql);
         try{
             await client.query("BEGIN");
             await client.query(sql);
@@ -51,7 +47,6 @@ async function main(){
         )
     `);
 }
-
 
 main()
 .catch((err)=>{
