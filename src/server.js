@@ -1,5 +1,6 @@
 const express = require("express");
 const { pool } = require("./db");
+const { getBalance } = require("./balances");
 
 const app = express();
 app.use(express.json());
@@ -49,6 +50,8 @@ app.post("/transfers", async (req, res) => {
     //    Postgres error code for that is '23505' — catch it separately and
     //    return the ORIGINAL transaction with 200.
 
+    
+
     const txResult = await client.query(
       "INSERT INTO transactions (idempotency_key, status, description) VALUES ($1,'pending',$2) RETURNING id",
       [idempotencyKey, description],
@@ -86,11 +89,8 @@ app.post("/transfers", async (req, res) => {
     }
     // 4. Compute the sender's balance from entries.
     //    If allow_negative is false and balance < amount → 422
-    const balanceResult = await client.query(
-      "SELECT COALESCE(SUM(CASE WHEN direction = 'debit' THEN amount ELSE -amount END), 0) AS balance FROM entries WHERE account_id = $1",
-      [from_account],
-    );
-    const senderBalance = Number(balanceResult.rows[0].balance);
+
+    const senderBalance = await getBalance(client, from_account);
 
     if (!sender.allow_negative && senderBalance < amount) {
       await client.query("ROLLBACK");

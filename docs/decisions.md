@@ -29,3 +29,24 @@ on top of the mess.
 but a local dev database. Once entries exist, the plain DELETE will hit a
 foreign key violation and need to become
 `TRUNCATE accounts, transactions, entries RESTART IDENTITY CASCADE`.
+
+## 003: Debit/credit convention
+
+**Decision:** Every transfer writes two entries — the source account gets
+`credit`, the destination gets `debit`. Debit and credit are just names for
+the two ends of a movement (where it went to, where it came from), not
+synonyms for "in" and "out".
+
+**Why:** Double-entry means recording both ends of every movement. If every
+movement has a from and a to, then across the whole ledger all credits must
+equal all debits — which is the invariant reconciliation checks.
+
+**Gotcha:** This feels backwards because bank statements use the opposite
+convention. That's because a statement is the bank's ledger, where my account
+is their liability, not their asset. Different book, inverted signs.
+
+**Consequence:** Whether a debit increases or decreases a balance depends on
+account type (Assets = Liabilities + Equity). For asset accounts, debit
+increases. For liability/equity/revenue, credit increases. So writing entries
+doesn't need to know the account type, but the balance query does —
+`SUM(debits) - SUM(credits)` for assets, flipped for the rest.
