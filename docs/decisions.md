@@ -50,3 +50,8 @@ account type (Assets = Liabilities + Equity). For asset accounts, debit
 increases. For liability/equity/revenue, credit increases. So writing entries
 doesn't need to know the account type, but the balance query does —
 `SUM(debits) - SUM(credits)` for assets, flipped for the rest.
+
+
+## 008: Balance sign depends on account type. 
+
+The reasoning you worked out: assets and expenses are where value lands, so debits are positive; liabilities, equity and revenue are where value originates, so credits are positive. Worth noting that allow_negative on opening_balances was a workaround masking the real defect.
