@@ -1,6 +1,7 @@
 const express = require("express");
 const { pool } = require("./db");
 const { getBalance } = require("./balances");
+const crypto = require('crypto');
 
 const app = express();
 app.use(express.json());
@@ -42,6 +43,11 @@ app.post("/transfers", async (req, res) => {
   }
 
   const client = await pool.connect();
+
+  const fingerprint = crypto.createHash('sha256')
+        .update(JSON.stringify({from_account, to_account, amount, currency}))
+        .digest('hex');
+
   try {
     await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
 
@@ -51,10 +57,10 @@ app.post("/transfers", async (req, res) => {
     //    return the ORIGINAL transaction with 200.
 
     
-
+    
     const txResult = await client.query(
-      "INSERT INTO transactions (idempotency_key, status, description) VALUES ($1,'pending',$2) RETURNING id",
-      [idempotencyKey, description],
+      "INSERT INTO transactions (idempotency_key, status, description, request_fingerprint) VALUES ($1,'pending',$2, $3) RETURNING id",
+      [idempotencyKey, description, fingerprint],
     );
 
     const transactionId = txResult.rows[0].id;
@@ -112,8 +118,27 @@ app.post("/transfers", async (req, res) => {
     res.status(201).json({ transaction_id: transactionId, status: "posted" });
   } catch (err) {
     await client.query("ROLLBACK");
+    if(err.code === '23505'){
+        const original = await client.query(
+            'SELECT id, status, request_fingerprint FROM transactions WHERE idempotency_key = $1',[idempotencyKey]
+        );
+
+        const row = original.rows[0];
+
+        if(!row){
+            return res.status(500).json({message: 'Idempotency conflict but original not found'});
+        }
+
+        if(row.request_fingerprint !== fingerprint){
+            return res.status(409).json({
+                message: 'Idempotency key already used with different payload'
+            });
+        }
+        return res.status(200).json({transaction_id: row.id, status: row.status});
+    }
+
     console.error("Transaction failed: ", err);
-    res
+    return res
       .status(500)
       .json({ status: "error", message: err.message, code: err.code });
   } finally {

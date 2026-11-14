@@ -11,7 +11,11 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "migrate": "node scripts/migrate.js",
     "seed": "node scripts/seed.js",
-    "dev": "node src/server.js"
+    "dev": "node src/server.js",
+    "db": "docker compose exec db psql -U ledger",
+    "db:tables": "docker compose exec db psql -U ledger -c '\\dt'",
+    "db:schema": "docker compose exec db psql -U ledger -c '\\d accounts' -c '\\d transactions' -c '\\d entries'",
+    "db:balances": "docker compose exec db psql -U ledger -c \"SELECT a.name, a.type, COALESCE(SUM(CASE WHEN a.type IN ('asset','expense') THEN CASE WHEN e.direction='debit' THEN e.amount ELSE -e.amount END ELSE CASE WHEN e.direction='credit' THEN e.amount ELSE -e.amount END END), 0) AS balance FROM accounts a LEFT JOIN entries e ON e.account_id=a.id GROUP BY a.id, a.name, a.type ORDER BY a.type;\""
   },
   "repository": {
     "type": "git",
