@@ -55,3 +55,16 @@ doesn't need to know the account type, but the balance query does —
 ## 008: Balance sign depends on account type. 
 
 The reasoning you worked out: assets and expenses are where value lands, so debits are positive; liabilities, equity and revenue are where value originates, so credits are positive. Worth noting that allow_negative on opening_balances was a workaround masking the real defect.
+
+## 009: Idempotency via unique constraint and request fingerprint.
+
+**Decision**: insert-and-catch-23505 rather than check-then-insert. The UNIQUE constraint does the deduplication; the database serializes concurrent retries for free.
+**Rejected**: SELECT-then-INSERT (race: two concurrent retries both see nothing, both proceed), and caching the key (a second source of truth that can disagree with the money).
+**The fingerprint**: SHA-256 over {from_account, to_account, amount, currency}. description deliberately excluded — it doesn’t affect the money, so changing it shouldn’t trigger a 409.
+**Nullable column**: in production this would be add-nullable → backfill → tighten. Legacy rows can’t be retrofitted since the original request wasn’t captured.
+**Contract:**
+- New key → 201, process normally
+- Same key, same fingerprint → 200, return the original transaction
+- Same key, different fingerprint → 409, client reused a key for a different
+  transfer. Returning the original would tell them their ₹5000 transfer
+  succeeded when a ₹100 one did.
